@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronômetro com Logo</title>
+    <style>
+        /* ESTILOS GERAIS */
+        body {
+            background-color: white; /* ALTERE A COR DE FUNDO AQUI */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+        
+        /* LOGO - POSICIONADA NO CANTO SUPERIOR ESQUERDO */
+        .logo-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px; /* Largura da logo */
+            height: auto;
+        }
+        
+        .logo {
+            width: 100%;
+            height: auto;
+            max-height: 200px; /* Altura máxima da logo */
+        }
+        
+        .container {
+            text-align: center;
+        }
+        
+        /* ESTILO DO TEMPORIZADOR */
+        .timer {
+            color: black;
+            font-size: 10rem; /* TAMANHO DA FONTE PRINCIPAL */
+            margin-bottom: 20px;
+            display: flex;
+            align-items: baseline;
+        }
+        
+        .time-section {
+            display: inline-block;
+        }
+        
+        /* ESTILO DOS MILÉSIMOS */
+        .milliseconds {
+            font-size: 0.6em;
+            opacity: 0.9;
+            color: black; /* COR DOS MILÉSIMOS */
+        }
+        
+        /* ESTILO DOS BOTÕES */
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #start {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #start:hover {
+            background-color: #45a049;
+        }
+        
+        #pause {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        #pause:hover {
+            background-color: #e67e22;
+        }
+        
+        #reset {
+            background-color: #e74c3c;
+            color: white;
+            display: none;
+        }
+        
+        #reset:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGO - ADICIONE O CAMINHO DA SUA IMAGEM NO "src" -->
+    <div class="logo-container">
+        <img class="logo" src="logo.png"alt="Logo">
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="container">
+        <!-- DISPLAY DO TEMPORIZADOR -->
+        <div class="timer">
+            <span class="time-section" id="hours">00</span>:
+            <span class="time-section" id="minutes">00</span>:
+            <span class="time-section" id="seconds">00</span>
+            <span class="milliseconds" id="milliseconds">.000</span>
+        </div>
+        
+        <!-- BOTÕES DE CONTROLE -->
+        <div class="buttons">
+            <button id="start">Iniciar</button>
+            <button id="pause">Pausar</button>
+            <button id="reset">Zerar</button>
+        </div>
+    </div>
+
+    <script>
+        // VARIÁVEIS GLOBAIS
+        const hoursDisplay = document.getElementById('hours');
+        const minutesDisplay = document.getElementById('minutes');
+        const secondsDisplay = document.getElementById('seconds');
+        const millisecondsDisplay = document.getElementById('milliseconds');
+        const startBtn = document.getElementById('start');
+        const pauseBtn = document.getElementById('pause');
+        const resetBtn = document.getElementById('reset');
+        
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval;
+        let isRunning = false;
+        
+        // FORMATA NÚMEROS COM 2 DÍGITOS (00)
+        function formatTime(time) {
+            return time < 10 ? '0' + time : time;
+        }
+        
+        // FORMATA MILÉSIMOS COM 3 DÍGITOS (.000)
+        function formatMilliseconds(ms) {
+            if (ms < 10) return '.00' + ms;
+            if (ms < 100) return '.0' + ms;
+            return '.' + ms;
+        }
+        
+        // ATUALIZA O DISPLAY DO TEMPORIZADOR
+        function updateTimer() {
+            const currentTime = Date.now();
+            elapsedTime = currentTime - startTime;
+            
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = elapsedTime % 1000;
+            
+            hoursDisplay.textContent = formatTime(hours);
+            minutesDisplay.textContent = formatTime(minutes);
+            secondsDisplay.textContent = formatTime(seconds);
+            millisecondsDisplay.textContent = formatMilliseconds(milliseconds);
+        }
+        
+        // EVENTO: BOTÃO INICIAR
+        startBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = requestAnimationFrame(function animate() {
+                    updateTimer();
+                    if (isRunning) {
+                        timerInterval = requestAnimationFrame(animate);
+                    }
+                });
+                isRunning = true;
+                startBtn.disabled = true;
+                resetBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
+            }
+        });
+        
+        // EVENTO: BOTÃO PAUSAR
+        pauseBtn.addEventListener('click', () => {
+            if (isRunning) {
+                cancelAnimationFrame(timerInterval);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.style.display = 'none';
+                resetBtn.style.display = 'inline-block';
+            }
+        });
+        
+        // EVENTO: BOTÃO ZERAR
+        resetBtn.addEventListener('click', () => {
+            cancelAnimationFrame(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            hoursDisplay.textContent = '00';
+            minutesDisplay.textContent = '00';
+            secondsDisplay.textContent = '00';
+            millisecondsDisplay.textContent = '.000';
+            startBtn.disabled = false;
+            resetBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+        });
+    </script>
+</body>
+</html>
